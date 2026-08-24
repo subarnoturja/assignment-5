@@ -18,8 +18,20 @@ export async function createBookingAction(
       body: JSON.stringify(payload),
     });
 
+    const contentType = res.headers.get('content-type');
+
+    // Prevent JSON parsing error if server returned HTML (404/500 page)
+    if (!contentType || !contentType.includes('application/json')) {
+      const htmlText = await res.text();
+      console.error('Server returned HTML response:', htmlText);
+      return {
+        success: false,
+        error: `Server error (${res.status}). Verify API route path or check Express server logs.`,
+      };
+    }
+
     const data = await res.json();
-    if (!res.ok) return { success: false, error: data.message };
+    if (!res.ok) return { success: false, error: data.message || 'Booking creation failed' };
 
     return { success: true, booking: data };
   } catch (err) {
@@ -27,7 +39,6 @@ export async function createBookingAction(
     return { success: false, error: errorMessage };
   }
 }
-
 export async function updateBookingStatusAction(
   token: string,
   bookingId: string,

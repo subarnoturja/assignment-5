@@ -1,73 +1,55 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetcher } from '@/lib/api-client';
-import { User } from '@/lib/types';
-import { getStoredToken } from '@/utils/jwt';
-import { toggleUserStatusAction } from '../_actions/dashboard';
+import React, { useState } from 'react';
+import { Plus } from 'lucide-react';
+import AdminBookingsTable, { BookingRecord } from '../_components/adminBookingTable';
+import AdminBookingModal from '../_components/adminBookingModal';
 
 export default function AdminDashboardPage() {
-  const queryClient = useQueryClient();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data: users, isLoading } = useQuery<User[]>({
-    queryKey: ['admin-users'],
-    queryFn: () => fetcher('/admin/users'),
-  });
+  // Sample data (Replace with API responses or React Query)
+  const mockTechnicians = [
+    { id: 'tech-1', name: 'John Doe' },
+    { id: 'tech-2', name: 'Alex Smith' },
+  ];
 
-  const toggleUserStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'ACTIVE' | 'BANNED' }) => {
-      const token = getStoredToken();
-      if (!token) throw new Error('Unauthenticated');
-      return toggleUserStatusAction(token, id, status);
+  const mockServices = [
+    { id: 'srv-1', title: 'Electrical Repair' },
+    { id: 'srv-2', title: 'Plumbing Service' },
+  ];
+
+  const mockBookings: BookingRecord[] = [
+    {
+      id: 'b-1',
+      technicianName: 'John Doe',
+      serviceTitle: 'Electrical Repair',
+      scheduledAt: '2026-08-25T10:00:00Z',
+      status: 'PENDING' as never,
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-    },
-  });
-
-  if (isLoading) return <div className="p-8 text-center text-sm">Loading user registry...</div>;
+  ];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Platform User Management</h1>
-      <div className="bg-white border rounded-2xl overflow-hidden shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 border-b text-slate-600">
-            <tr>
-              <th className="p-4">User</th>
-              <th className="p-4">Email</th>
-              <th className="p-4">Role</th>
-              <th className="p-4 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {users?.map((u) => (
-              <tr key={u.id}>
-                <td className="p-4 font-semibold">{u.name}</td>
-                <td className="p-4">{u.email}</td>
-                <td className="p-4 font-bold text-xs">{u.role}</td>
-                <td className="p-4 text-right">
-                  <button
-                    onClick={() =>
-                      toggleUserStatus.mutate({
-                        id: u.id,
-                        status: u.status === 'BANNED' ? 'ACTIVE' : 'BANNED',
-                      })
-                    }
-                    className={`px-3 py-1 text-xs font-bold rounded-lg ${
-                      u.status === 'BANNED'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}
-                  >
-                    {u.status === 'BANNED' ? 'Unban' : 'Ban'}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-800">Admin Management</h1>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition"
+        >
+          <Plus className="h-4 w-4" />
+          Book Technician
+        </button>
       </div>
+
+      <AdminBookingsTable bookings={mockBookings} />
+
+      <AdminBookingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        technicians={mockTechnicians}
+        services={mockServices}
+      />
     </div>
   );
 }
