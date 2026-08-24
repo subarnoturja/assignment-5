@@ -111,3 +111,53 @@ export async function createPaymentSessionAction(token: string, bookingId: strin
     return { success: false, error: errorMessage };
   }
 }
+
+// User Toggle
+export async function toggleUserStatusAction(
+  token: string,
+  userId: string,
+  status: 'ACTIVE' | 'BANNED'
+) {
+  try {
+    const res = await fetch(`${BACKEND_BASE}/admin/users/${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.message };
+
+    revalidatePath('/admin-dashboard');
+    return { success: true, user: data };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Server connection failed';
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Create Category
+export async function createCategoryAction(token: string, name: string, description?: string) {
+  try {
+    const res = await fetch(`${BACKEND_BASE}/admin/categories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ name, description }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.message };
+
+    revalidatePath('/admin-dashboard/categories');
+    return { success: true, category: data };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Server connection failed';
+    return { success: false, error: errorMessage };
+  }
+}
