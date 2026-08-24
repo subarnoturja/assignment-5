@@ -20,7 +20,30 @@ export async function registerAction(formData: FormData) {
     if (!res.ok) return { success: false, error: data.message || 'Registration failed' };
 
     return { success: true, data };
-  } catch (err: any) {
-    return { success: false, error: err.message || 'Server connection failed' };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Server connection failed';
+    return { success: false, error: errorMessage };
+  }
+}
+
+export async function loginAction(formData: FormData) {
+  const email = formData.get('email');
+  const password = formData.get('password');
+
+  try {
+    const res = await fetch(`${BACKEND_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+      cache: 'no-store',
+    });
+
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.message || 'Invalid credentials' };
+
+    return { success: true, token: data.accessToken, user: data.user };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Server connection failed';
+    return { success: false, error: errorMessage };
   }
 }
