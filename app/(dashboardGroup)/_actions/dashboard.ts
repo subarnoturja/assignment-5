@@ -56,3 +56,36 @@ export async function updateBookingStatusAction(
     return { success: false, error: errorMessage };
   }
 }
+
+// Create Technicians
+export async function createTechnicianAction(
+  token: string,
+  payload: {
+    userId?: string;
+    bio: string;
+    skills: string[];
+    hourlyRate: number;
+    location: string;
+  }
+) {
+  try {
+    const res = await fetch(`${BACKEND_BASE}/technician`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.message };
+
+    revalidatePath('/admin-dashboard');
+    revalidatePath('/author-dashboard');
+    return { success: true, technician: data };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Server connection failed';
+    return { success: false, error: errorMessage };
+  }
+}
