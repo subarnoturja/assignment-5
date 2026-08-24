@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Wrench, LayoutDashboard, LogOut, Menu, X } from 'lucide-react';
 import { getStoredToken } from '@/utils/jwt';
 import { logoutUser } from '@/service/logout';
@@ -11,20 +12,27 @@ import { User, Role } from '@/lib/types';
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname(); 
 
   useEffect(() => {
-    const token = getStoredToken();
-    if (token) {
-      getMe()
-        .then(setUser)
-        .catch(() => setUser(null));
-    }
-  }, []);
+    const fetchUser = () => {
+      const token = getStoredToken();
+      if (token) {
+        getMe()
+          .then(setUser)
+          .catch(() => setUser(null));
+      } else {
+        setUser(null);
+      }
+    };
+
+    fetchUser();
+  }, [pathname]); 
 
   const getDashboardPath = () => {
     if (!user) return '/dashboard';
     if (user.role === Role.ADMIN) return '/admin-dashboard';
-    if (user.role === Role.TECHNICIAN) return '/author-dashboard';
+    if (user.role === Role.TECHNICIAN) return '/technician-dashboard';
     return '/dashboard';
   };
 

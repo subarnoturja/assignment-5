@@ -8,26 +8,27 @@ import { loginAction } from '../_actions/auth';
 import AuthForm from '../_components/auth-form';
 
 export default function LoginPage() {
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
+    setError(null);
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
     const res = await loginAction(formData);
 
+    setLoading(false);
+
     if (res.success && res.token) {
-      setStoredToken(res.token);
-      if (res.user.role === Role.ADMIN) router.push('/admin-dashboard');
-      else if (res.user.role === Role.TECHNICIAN) router.push('/author-dashboard');
-      else router.push('/dashboard');
+      // 1. Save token
+      localStorage.setItem('accessToken', res.token);
+      
+      // 2. Hard redirect forces Navbar to re-render with fresh token state
+      window.location.href = '/dashboard';
     } else {
-      setError(res.error || 'Login failed.');
-      setLoading(false);
+      setError(res.error || 'Login failed');
     }
   };
 

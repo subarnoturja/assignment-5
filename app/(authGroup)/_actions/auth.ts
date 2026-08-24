@@ -40,10 +40,24 @@ export async function loginAction(formData: FormData) {
       cache: 'no-store',
     });
 
-    const data = await res.json();
-    if (!res.ok) return { success: false, error: data.message || 'Invalid credentials' };
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return { success: false, error: 'Server returned non-JSON response' };
+    }
 
-    return { success: true, token: data.accessToken, user: data.user };
+    const data = await res.json();
+
+    if (!res.ok) {
+      return { success: false, error: data.message || 'Invalid credentials' };
+    }
+
+    const token = data.accessToken || data.token || data.data?.token || data.data?.accessToken;
+
+    if (!token) {
+      return { success: false, error: 'Token missing from server response' };
+    }
+
+    return { success: true, token, user: data.user || data.data?.user };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Server connection failed';
     return { success: false, error: errorMessage };
