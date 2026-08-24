@@ -89,3 +89,25 @@ export async function createTechnicianAction(
     return { success: false, error: errorMessage };
   }
 }
+
+// create payment session 
+export async function createPaymentSessionAction(token: string, bookingId: string) {
+  try {
+    const res = await fetch(`${BACKEND_BASE}/payments/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ bookingId }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.message };
+
+    return { success: true, checkoutUrl: data.checkoutUrl };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Server connection failed';
+    return { success: false, error: errorMessage };
+  }
+}
